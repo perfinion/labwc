@@ -26,6 +26,7 @@ server_protocols = [
 	wl_protocol_dir / 'staging/ext-image-capture-source/ext-image-capture-source-v1.xml',
 	wl_protocol_dir / 'staging/ext-image-copy-capture/ext-image-copy-capture-v1.xml',
 	'cosmic-workspace-unstable-v1.xml',
+	'interop.xml',
 	'wlr-layer-shell-unstable-v1.xml',
 	'wlr-input-inhibitor-unstable-v1.xml',
 	'wlr-output-power-management-unstable-v1.xml',
