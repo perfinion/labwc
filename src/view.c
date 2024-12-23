@@ -1658,6 +1658,7 @@ view_move_to_workspace(struct view *view, struct workspace *workspace)
 	assert(view);
 	assert(workspace);
 	if (view->workspace != workspace) {
+		wl_signal_emit_mutable(&view->events.workspace_changed, workspace);
 		view->workspace = workspace;
 		wlr_scene_node_reparent(&view->scene_tree->node,
 			workspace->tree);
@@ -2562,6 +2563,7 @@ view_init(struct view *view)
 	wl_signal_init(&view->events.activated);
 	wl_signal_init(&view->events.set_icon);
 	wl_signal_init(&view->events.destroy);
+	wl_signal_init(&view->events.workspace_changed);
 }
 
 void

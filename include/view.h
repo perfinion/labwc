@@ -272,6 +272,7 @@ struct view {
 		 */
 		struct wl_signal set_icon;
 		struct wl_signal destroy;
+		struct wl_signal workspace_changed;  /* struct workspace *new_workspace */
 	} events;
 };
 
