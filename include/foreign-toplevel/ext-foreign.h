@@ -7,6 +7,7 @@
 struct ext_foreign_toplevel {
 	struct view *view;
 	struct wlr_ext_foreign_toplevel_handle_v1 *handle;
+	struct interop_handle *interop_handle;
 
 	/* Client side events */
 	struct {
@@ -17,6 +18,7 @@ struct ext_foreign_toplevel {
 	struct {
 		struct wl_listener new_app_id;
 		struct wl_listener new_title;
+		struct wl_listener workspace_changed;
 	} on_view;
 };
 

@@ -38,6 +38,7 @@
 #include <wlr/types/wlr_xdg_foreign_registry.h>
 #include <wlr/types/wlr_xdg_foreign_v1.h>
 #include <wlr/types/wlr_xdg_foreign_v2.h>
+#include "protocols/workspace_interop.h"
 
 #if HAVE_XWAYLAND
 #include <wlr/xwayland.h>
@@ -680,6 +681,8 @@ server_init(struct server *server)
 			server->wl_display, LAB_EXT_FOREIGN_TOPLEVEL_LIST_VERSION);
 
 	wlr_alpha_modifier_v1_create(server->wl_display);
+
+	server->interop_manager = interop_manager_create(server->wl_display, 1);
 
 	session_lock_init(server);
 
