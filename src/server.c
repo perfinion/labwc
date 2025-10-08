@@ -38,7 +38,6 @@
 #include <wlr/types/wlr_xdg_foreign_registry.h>
 #include <wlr/types/wlr_xdg_foreign_v1.h>
 #include <wlr/types/wlr_xdg_foreign_v2.h>
-#include "protocols/workspace_interop.h"
 
 #if HAVE_XWAYLAND
 #include <wlr/xwayland.h>
@@ -68,6 +67,7 @@
 #include "view.h"
 #include "workspaces.h"
 #include "xwayland.h"
+#include "protocols/ext-foreign-toplevel-workspace.h"
 
 #define LAB_EXT_DATA_CONTROL_VERSION 1
 #define LAB_EXT_FOREIGN_TOPLEVEL_LIST_VERSION 1
@@ -682,7 +682,7 @@ server_init(struct server *server)
 
 	wlr_alpha_modifier_v1_create(server->wl_display);
 
-	server->interop_manager = interop_manager_create(server->wl_display, 1);
+	server->foreign_toplevel_workspace_manager = ext_foreign_toplevel_workspace_manager_create(server->wl_display, 1);
 
 	session_lock_init(server);
 

@@ -7,7 +7,7 @@
 struct lab_ext_workspace;
 struct wlr_foreign_toplevel_handle_v1;
 
-struct interop_manager {
+struct ext_foreign_toplevel_workspace_manager {
 	struct wl_global *global;
 	struct wl_list handles;
 	struct wl_list resources;
@@ -17,7 +17,7 @@ struct interop_manager {
 };
 
 struct ext_foreign_toplevel_workspace_handle_v1 {
-	struct interop_manager *manager;
+	struct ext_foreign_toplevel_workspace_manager *manager;
 	struct wlr_ext_foreign_toplevel_handle_v1 *toplevel;
 	//struct wlr_foreign_toplevel_handle_v1 *toplevel;
 	struct wl_list resources;
@@ -33,11 +33,11 @@ struct ext_foreign_toplevel_workspace_handle_v1 {
 };
 
 
-struct interop_manager *interop_manager_create(
+struct ext_foreign_toplevel_workspace_manager *ext_foreign_toplevel_workspace_manager_create(
 	struct wl_display *display, uint32_t version);
 
 struct ext_foreign_toplevel_workspace_handle_v1 *ext_foreign_toplevel_workspace_handle_v1_create(
-	struct interop_manager *manager,
+	struct ext_foreign_toplevel_workspace_manager *manager,
 	struct wlr_ext_foreign_toplevel_handle_v1 *toplevel);
 	//struct wlr_foreign_toplevel_handle_v1 *toplevel);
 

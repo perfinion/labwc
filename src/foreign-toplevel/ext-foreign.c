@@ -2,7 +2,7 @@
 #include "foreign-toplevel/ext-foreign.h"
 #include <assert.h>
 #include <wlr/types/wlr_ext_foreign_toplevel_list_v1.h>
-#include "protocols/workspace_interop.h"
+#include "protocols/ext-foreign-toplevel-workspace.h"
 #include "common/macros.h"
 #include "labwc.h"
 #include "view.h"
@@ -97,7 +97,7 @@ ext_foreign_toplevel_init(struct ext_foreign_toplevel *ext_toplevel,
 	}
 
 	ext_toplevel->ext_foreign_toplevel_workspace_handle_v1 = ext_foreign_toplevel_workspace_handle_v1_create(
-		view->server->interop_manager, ext_toplevel->handle);
+		view->server->foreign_toplevel_workspace_manager, ext_toplevel->handle);
 	if (!ext_toplevel->ext_foreign_toplevel_workspace_handle_v1) {
 		wlr_log(WLR_ERROR, "cannot create interop handle for (%s)",
 			view_get_string_prop(view, "title"));

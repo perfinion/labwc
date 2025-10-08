@@ -5,13 +5,13 @@
 #include <wlr/types/wlr_ext_foreign_toplevel_list_v1.h>
 #include "protocols/ext-workspace.h"
 #include "protocols/transaction-addon.h"
-#include "protocols/workspace_interop.h"
+#include "protocols/ext-foreign-toplevel-workspace.h"
 #include "ext-foreign-toplevel-workspace-unstable-v1-protocol.h"
 #include "ext-foreign-toplevel-list-v1-protocol.h"
 
-#define INTEROP_VERSION 1
+#define EXT_FOREIGN_TOPLEVEL_WORKSPACE_VERSION 1
 
-struct interop_mapping {
+struct foreign_toplevel_workspace_mapping {
 	struct ext_foreign_toplevel_workspace_handle_v1 *handle;
 	struct lab_ext_workspace *workspace;
 	struct {
@@ -21,7 +21,7 @@ struct interop_mapping {
 };
 
 static void
-send_event(struct interop_mapping *mapping, struct wl_resource *handle_resource,
+send_event(struct foreign_toplevel_workspace_mapping *mapping, struct wl_resource *handle_resource,
 		void (*fn)(struct wl_resource *handle_res, struct wl_resource *ws_res))
 {
 	struct lab_wl_resource_addon *handle_addon, *ws_addon;
@@ -43,7 +43,7 @@ send_event(struct interop_mapping *mapping, struct wl_resource *handle_resource,
 }
 
 static void
-broadcast_event(struct interop_mapping *mapping,
+broadcast_event(struct foreign_toplevel_workspace_mapping *mapping,
 		void (*fn)(struct wl_resource *handle_res, struct wl_resource *ws_res))
 {
 	struct wl_resource *handle_resource;
@@ -53,7 +53,7 @@ broadcast_event(struct interop_mapping *mapping,
 }
 
 static void
-mapping_destroy(struct interop_mapping *mapping)
+mapping_destroy(struct foreign_toplevel_workspace_mapping *mapping)
 {
 	broadcast_event(mapping, ext_foreign_toplevel_workspace_handle_v1_send_workspace_leave);
 	wl_list_remove(&mapping->on.workspace_destroy.link);
@@ -64,15 +64,15 @@ mapping_destroy(struct interop_mapping *mapping)
 static void
 mapping_handle_workspace_destroy(struct wl_listener *listener, void *data)
 {
-	struct interop_mapping *mapping =
+	struct foreign_toplevel_workspace_mapping *mapping =
 		wl_container_of(listener, mapping, on.workspace_destroy);
 	mapping_destroy(mapping);
 }
 
-static struct interop_mapping *
+static struct foreign_toplevel_workspace_mapping *
 mapping_create(struct ext_foreign_toplevel_workspace_handle_v1 *handle, struct lab_ext_workspace *workspace)
 {
-	struct interop_mapping *mapping = calloc(1, sizeof(*mapping));
+	struct foreign_toplevel_workspace_mapping *mapping = calloc(1, sizeof(*mapping));
 	mapping->handle = handle;
 	mapping->workspace = workspace;
 	mapping->on.workspace_destroy.notify = mapping_handle_workspace_destroy;
@@ -82,10 +82,10 @@ mapping_create(struct ext_foreign_toplevel_workspace_handle_v1 *handle, struct l
 	return mapping;
 }
 
-static struct interop_mapping *
+static struct foreign_toplevel_workspace_mapping *
 find_mapping(struct ext_foreign_toplevel_workspace_handle_v1 *handle, struct lab_ext_workspace *workspace)
 {
-	struct interop_mapping *mapping;
+	struct foreign_toplevel_workspace_mapping *mapping;
 	wl_list_for_each(mapping, &handle->mappings, link) {
 		if (mapping->workspace == workspace) {
 			return mapping;
@@ -97,7 +97,7 @@ find_mapping(struct ext_foreign_toplevel_workspace_handle_v1 *handle, struct lab
 static void
 ext_foreign_toplevel_workspace_handle_v1_destroy(struct ext_foreign_toplevel_workspace_handle_v1 *handle)
 {
-	struct interop_mapping *mapping, *mapping_tmp;
+	struct foreign_toplevel_workspace_mapping *mapping, *mapping_tmp;
 	wl_list_for_each_safe(mapping, mapping_tmp, &handle->mappings, link) {
 		mapping_destroy(mapping);
 	}
@@ -183,7 +183,7 @@ manager_handle_create_handle(struct wl_client *client,
 		struct wl_resource *workspace_manager_res, uint32_t obj_id)
 {
 	struct lab_wl_resource_addon *ws_addon, *handle_addon;
-	struct interop_manager *manager = wl_resource_get_user_data(manager_res);
+	struct ext_foreign_toplevel_workspace_manager *manager = wl_resource_get_user_data(manager_res);
 	if (!manager) {
 		return;
 	}
@@ -233,14 +233,14 @@ manager_handle_create_handle(struct wl_client *client,
 	wl_list_insert(&handle->resources, wl_resource_get_link(handle_resource));
 
 	// initial sync
-	struct interop_mapping *mapping;
+	struct foreign_toplevel_workspace_mapping *mapping;
 	wl_list_for_each(mapping, &handle->mappings, link) {
 		send_event(mapping, handle_resource, ext_foreign_toplevel_workspace_handle_v1_send_workspace_enter);
 	}
 }
 
 
-static const struct interop_manager_interface manager_impl = {
+static const struct ext_foreign_toplevel_workspace_manager_interface manager_impl = {
 	.create_handle = manager_handle_create_handle,
 };
 
@@ -254,9 +254,9 @@ static void
 manager_handle_bind(struct wl_client *client, void *data,
 		uint32_t version, uint32_t id)
 {
-	struct interop_manager *manager = data;
+	struct ext_foreign_toplevel_workspace_manager *manager = data;
 	struct wl_resource *manager_resource = wl_resource_create(client,
-			&interop_manager_interface,
+			&ext_foreign_toplevel_workspace_manager_interface,
 			version, id);
 	if (!manager_resource) {
 		wl_client_post_no_memory(client);
@@ -272,7 +272,7 @@ manager_handle_bind(struct wl_client *client, void *data,
 static void
 manager_handle_display_destroy(struct wl_listener *listener, void *data)
 {
-	struct interop_manager *manager =
+	struct ext_foreign_toplevel_workspace_manager *manager =
 		wl_container_of(listener, manager, on.display_destroy);
 
 	struct ext_foreign_toplevel_workspace_handle_v1 *handle, *tmp;
@@ -287,14 +287,14 @@ manager_handle_display_destroy(struct wl_listener *listener, void *data)
 
 /* Public API */
 
-struct interop_manager *
-interop_manager_create(struct wl_display *display, uint32_t version)
+struct ext_foreign_toplevel_workspace_manager *
+ext_foreign_toplevel_workspace_manager_create(struct wl_display *display, uint32_t version)
 {
-	assert(version <= INTEROP_VERSION);
+	assert(version <= EXT_FOREIGN_TOPLEVEL_WORKSPACE_VERSION);
 
-	struct interop_manager *manager = calloc(1, sizeof(*manager));
+	struct ext_foreign_toplevel_workspace_manager *manager = calloc(1, sizeof(*manager));
 	manager->global = wl_global_create(display,
-			&interop_manager_interface,
+			&ext_foreign_toplevel_workspace_manager_interface,
 			version, manager, manager_handle_bind);
 
 	if (!manager->global) {
@@ -311,7 +311,7 @@ interop_manager_create(struct wl_display *display, uint32_t version)
 }
 
 struct ext_foreign_toplevel_workspace_handle_v1 *
-ext_foreign_toplevel_workspace_handle_v1_create(struct interop_manager *manager,
+ext_foreign_toplevel_workspace_handle_v1_create(struct ext_foreign_toplevel_workspace_manager *manager,
 		struct wlr_ext_foreign_toplevel_handle_v1 *toplevel)
 //		struct wlr_foreign_toplevel_handle_v1 *toplevel)
 {
@@ -342,7 +342,7 @@ void
 toplevel_leave_workspace(struct ext_foreign_toplevel_workspace_handle_v1 *handle,
 		struct lab_ext_workspace *workspace)
 {
-	struct interop_mapping *mapping = find_mapping(handle, workspace);
+	struct foreign_toplevel_workspace_mapping *mapping = find_mapping(handle, workspace);
 	if (!mapping) {
 		return;
 	}

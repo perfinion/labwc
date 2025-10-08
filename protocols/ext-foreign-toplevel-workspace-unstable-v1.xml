@@ -3,7 +3,7 @@
   <copyright>
   </copyright>
 
-  <interface name="interop_manager" version="1">
+  <interface name="ext_foreign_toplevel_workspace_manager" version="1">
     <description summary="list and control opened apps">
     </description>
 
