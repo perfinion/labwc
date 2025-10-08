@@ -16,7 +16,7 @@ struct interop_manager {
 	} on;
 };
 
-struct interop_handle {
+struct ext_foreign_toplevel_workspace_handle_v1 {
 	struct interop_manager *manager;
 	struct wlr_ext_foreign_toplevel_handle_v1 *toplevel;
 	//struct wlr_foreign_toplevel_handle_v1 *toplevel;
@@ -36,15 +36,15 @@ struct interop_handle {
 struct interop_manager *interop_manager_create(
 	struct wl_display *display, uint32_t version);
 
-struct interop_handle *interop_handle_create(
+struct ext_foreign_toplevel_workspace_handle_v1 *ext_foreign_toplevel_workspace_handle_v1_create(
 	struct interop_manager *manager,
 	struct wlr_ext_foreign_toplevel_handle_v1 *toplevel);
 	//struct wlr_foreign_toplevel_handle_v1 *toplevel);
 
 void toplevel_join_workspace(
-	struct interop_handle *handle, struct lab_ext_workspace *workspace);
+	struct ext_foreign_toplevel_workspace_handle_v1 *handle, struct lab_ext_workspace *workspace);
 
 void toplevel_leave_workspace(
-	struct interop_handle *handle, struct lab_ext_workspace *workspace);
+	struct ext_foreign_toplevel_workspace_handle_v1 *handle, struct lab_ext_workspace *workspace);
 
 #endif /* LABWC_PROTOCOLS_EXT_WORKSPACES_H */

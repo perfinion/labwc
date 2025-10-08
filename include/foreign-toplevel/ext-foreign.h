@@ -7,7 +7,7 @@
 struct ext_foreign_toplevel {
 	struct view *view;
 	struct wlr_ext_foreign_toplevel_handle_v1 *handle;
-	struct interop_handle *interop_handle;
+	struct ext_foreign_toplevel_workspace_handle_v1 *ext_foreign_toplevel_workspace_handle_v1;
 
 	/* Client side events */
 	struct {
