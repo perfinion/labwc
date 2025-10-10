@@ -16,7 +16,7 @@ handle_handle_destroy(struct wl_listener *listener, void *data)
 		wl_container_of(listener, ext_toplevel, on.handle_destroy);
 
 	/* ext_foreign_toplevel_workspace_handle_v1 has its own toplevel destroy listener */
-	ext_toplevel->ext_foreign_toplevel_workspace_handle_v1 = NULL;
+	ext_toplevel->workspace_handle = NULL;
 
 	/* Client side requests */
 	wl_list_remove(&ext_toplevel->on.handle_destroy.link);
@@ -65,14 +65,14 @@ handle_workspace_changed(struct wl_listener *listener, void *data)
 {
 	struct ext_foreign_toplevel *ext_toplevel =
 		wl_container_of(listener, ext_toplevel, on_view.workspace_changed);
-	assert(ext_toplevel->ext_foreign_toplevel_workspace_handle_v1);
+	assert(ext_toplevel->workspace_handle);
 
 	struct workspace *new_workspace = data;
 	toplevel_leave_workspace(
-		ext_toplevel->ext_foreign_toplevel_workspace_handle_v1,
+		ext_toplevel->workspace_handle,
 		ext_toplevel->view->workspace->ext_workspace);
 	toplevel_join_workspace(
-		ext_toplevel->ext_foreign_toplevel_workspace_handle_v1, new_workspace->ext_workspace);
+		ext_toplevel->workspace_handle, new_workspace->ext_workspace);
 }
 
 /* Internal API */
@@ -96,14 +96,14 @@ ext_foreign_toplevel_init(struct ext_foreign_toplevel *ext_toplevel,
 		return;
 	}
 
-	ext_toplevel->ext_foreign_toplevel_workspace_handle_v1 = ext_foreign_toplevel_workspace_handle_v1_create(
+	ext_toplevel->workspace_handle = ext_foreign_toplevel_workspace_handle_v1_create(
 		view->server->foreign_toplevel_workspace_manager, ext_toplevel->handle);
-	if (!ext_toplevel->ext_foreign_toplevel_workspace_handle_v1) {
+	if (!ext_toplevel->workspace_handle) {
 		wlr_log(WLR_ERROR, "cannot create interop handle for (%s)",
 			view_get_string_prop(view, "title"));
 		return;
 	}
-	toplevel_join_workspace(ext_toplevel->ext_foreign_toplevel_workspace_handle_v1,
+	toplevel_join_workspace(ext_toplevel->workspace_handle,
 		ext_toplevel->view->workspace->ext_workspace);
 
 	/* Client side requests */
