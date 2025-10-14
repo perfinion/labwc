@@ -19,7 +19,6 @@ struct ext_foreign_toplevel_workspace_manager {
 struct ext_foreign_toplevel_workspace_handle_v1 {
 	struct ext_foreign_toplevel_workspace_manager *manager;
 	struct wlr_ext_foreign_toplevel_handle_v1 *toplevel;
-	//struct wlr_foreign_toplevel_handle_v1 *toplevel;
 	struct wl_list resources;
 	struct wl_list mappings;
 	struct {
@@ -39,7 +38,6 @@ struct ext_foreign_toplevel_workspace_manager *ext_foreign_toplevel_workspace_ma
 struct ext_foreign_toplevel_workspace_handle_v1 *ext_foreign_toplevel_workspace_handle_v1_create(
 	struct ext_foreign_toplevel_workspace_manager *manager,
 	struct wlr_ext_foreign_toplevel_handle_v1 *toplevel);
-	//struct wlr_foreign_toplevel_handle_v1 *toplevel);
 
 void toplevel_join_workspace(
 	struct ext_foreign_toplevel_workspace_handle_v1 *handle, struct lab_ext_workspace *workspace);

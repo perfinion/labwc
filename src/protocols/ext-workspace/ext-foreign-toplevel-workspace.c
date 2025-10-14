@@ -194,7 +194,6 @@ manager_handle_create_handle(struct wl_client *client,
 		return;
 	}
 
-	//struct wlr_foreign_toplevel_handle_v1 *toplevel =
 	struct wlr_ext_foreign_toplevel_handle_v1 *toplevel =
 		wl_resource_get_user_data(toplevel_res);
 	if (!toplevel) {
@@ -313,7 +312,6 @@ ext_foreign_toplevel_workspace_manager_create(struct wl_display *display, uint32
 struct ext_foreign_toplevel_workspace_handle_v1 *
 ext_foreign_toplevel_workspace_handle_v1_create(struct ext_foreign_toplevel_workspace_manager *manager,
 		struct wlr_ext_foreign_toplevel_handle_v1 *toplevel)
-//		struct wlr_foreign_toplevel_handle_v1 *toplevel)
 {
 	struct ext_foreign_toplevel_workspace_handle_v1 *handle = calloc(1, sizeof(*handle));
 	handle->manager = manager;
