@@ -3,6 +3,7 @@
 import sys
 sys.path.append("/home/jason/code/xfce/labwc/pybase")
 import time
+from pprint import pprint
 
 from pywayland.client import Display
 from pyinterop.protocol.wayland import WlOutput, WlRegistry, WlSeat, WlShm
@@ -38,10 +39,14 @@ class WorkspaceLister:
         self.workspace_handles = []
         self.workspace_names = []
         # A flag to signal when we are done and can exit the loop
-        self.finished = False
+        self.finished = 0
 
         self.toplevel_list = None
         self.toplevel_counter = 0
+
+        self.tlws_mgr = None
+        self.tlws_list = []
+        self.tlws_counter = 0
 
         # Start by listening to the registry
         registry = self.display.get_registry()
@@ -69,11 +74,14 @@ class WorkspaceLister:
 
     def run(self):
         """Run the main event loop until we get all workspace names."""
-        print("Waiting for workspace names...")
-        while not self.finished:
-            # block=True waits for an event to arrive
-            self.display.dispatch(block=False)
-            time.sleep(1)
+        try:
+            while self.finished < 3:
+                # block=True waits for an event to arrive
+                print("Waiting for workspace names...", self.finished)
+                self.display.dispatch(block=False)
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
 
         print("\n--- Finished ---")
         print("Found workspaces:", self.workspace_names)
@@ -90,8 +98,10 @@ class WorkspaceLister:
             self.toplevel_list = registry.bind(name, ExtForeignToplevelListV1, version)
             self._reg_dispatcher(self.toplevel_list, "toplevel")
             self._reg_dispatcher(self.toplevel_list, "finished")
-            self.finished = True
-
+            self.finished += 1
+        elif interface == ExtForeignToplevelWorkspaceManager.name:
+            self.tlws_mgr = registry.bind(name, ExtForeignToplevelWorkspaceManager, version)
+            print("Bound ExtForeignToplevelWorkspaceManager")
 
     def _handle_wl_registry_global_remove(self, registry: WlRegistry, name: int):
         printf(f"_handle_wl_registry_global_remove: {registry}, {name}")
@@ -117,6 +127,7 @@ class WorkspaceLister:
     def _handle_workspace_manager_done(self, workspace_manager):
         # print(f"\nHandling {workspace_manager} done")
         print(f"\nWorkspace Manager Done")
+        self.finished += 1
 
     def _handle_workspace_manager_finished(self, workspace_manager):
         print(f"\nHandling {workspace_manager} finished")
@@ -164,31 +175,56 @@ class WorkspaceLister:
         self._reg_dispatcher(toplevel_handle, "app_id")
         self._reg_dispatcher(toplevel_handle, "identifier")
         self._reg_dispatcher(toplevel_handle, "done")
-        toplevel_handle.user_data = {"counter": self.toplevel_counter}
+        toplevel_handle.user_data = {
+            "counter": self.toplevel_counter,
+        }
+
+        if self.tlws_mgr is not None:
+            tlws_handle = self.tlws_mgr.create_handle(toplevel_handle, self.workspace_manager)
+            self._reg_dispatcher(tlws_handle, "workspace_enter")
+            self._reg_dispatcher(tlws_handle, "workspace_leave")
+            tlws_handle.user_data = {
+                "counter": self.toplevel_counter,
+            }
+            toplevel_handle.user_data["tlws_handle"] = tlws_handle
+
         self.toplevel_counter += 1
 
     def _handle_foreign_toplevel_list_finished(self, toplevel_list):
-        print(f"\nHandling {toplevel_list} finished")
+        print(f"\nHandling finished")
+        pprint(toplevel_list)
 
     def _handle_foreign_toplevel_handle_closed(self, toplevel_handle):
         toplevel_handle.user_data["closed"] = true
-        print(f"\nToplevel {toplevel_handle.user_data} closed")
+        print(f"\nToplevel closed")
+        pprint(toplevel_handle.user_data)
 
     def _handle_foreign_toplevel_handle_title(self, toplevel_handle, title: str):
         toplevel_handle.user_data["title"] = title
-        #print(f"\nToplevel {toplevel_handle.user_data} title [{title}]")
+        # print(f"\nToplevel {toplevel_handle.user_data} title [{title}]")
+        print(f"  -> title [{title}]")
 
     def _handle_foreign_toplevel_handle_app_id(self, toplevel_handle, app_id: str):
         toplevel_handle.user_data["app_id"] = app_id
-        #print(f"\nToplevel {toplevel_handle.user_data} app_id [{app_id}]")
+        # print(f"\nToplevel {toplevel_handle.user_data} app_id [{app_id}]")
+        print(f"  -> app_id [{app_id}]")
 
     def _handle_foreign_toplevel_handle_identifier(self, toplevel_handle, identifier: str):
         toplevel_handle.user_data["identifier"] = identifier
-        #print(f"\nToplevel {toplevel_handle.user_data} identifier [{identifier}]")
+        # print(f"\nToplevel {toplevel_handle.user_data} identifier [{identifier}]")
+        print(f"  -> identifier [{identifier}]")
 
     def _handle_foreign_toplevel_handle_done(self, toplevel_handle):
-        print(f"Toplevel {toplevel_handle.user_data} done")
+        print(f"Toplevel done")
+        pprint(toplevel_handle.user_data)
+        print()
 
+    def _handle_foreign_toplevel_workspace_handle_workspace_enter(self, tlws_handle, workspace_handle):
+        print(f"\nHandling Toplevel Workspace Enter: handle: {tlws_handle}, workspace: {workspace_handle}")
+        self.finished += 1
+
+    def _handle_foreign_toplevel_workspace_handle_workspace_leave(self, tlws_handle, workspace_handle):
+        print(f"\nHandling Toplevel Workspace Leave: handle: {tlws_handle}, workspace: {workspace_handle}")
 
 def main():
     client = WorkspaceLister()

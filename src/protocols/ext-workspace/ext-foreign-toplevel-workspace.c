@@ -185,12 +185,14 @@ manager_handle_create_handle(struct wl_client *client,
 	struct lab_wl_resource_addon *ws_addon, *handle_addon;
 	struct ext_foreign_toplevel_workspace_manager *manager = wl_resource_get_user_data(manager_res);
 	if (!manager) {
+		wlr_log(WLR_ERROR, "manager_handle_create_handle: manager is null");
 		return;
 	}
 
 	ws_addon = wl_resource_get_user_data(workspace_manager_res);
 	if (!ws_addon) {
 		//FIXME: what to do, complain loudly? send error? send error.
+		wlr_log(WLR_ERROR, "manager_handle_create_handle: ws_addon is null");
 		return;
 	}
 
@@ -198,6 +200,7 @@ manager_handle_create_handle(struct wl_client *client,
 		wl_resource_get_user_data(toplevel_res);
 	if (!toplevel) {
 		//FIXME: what to do, complain loudly? send error? send error.
+		wlr_log(WLR_ERROR, "manager_handle_create_handle: toplevel is null");
 		return;
 	}
 
@@ -211,6 +214,7 @@ manager_handle_create_handle(struct wl_client *client,
 	}
 	if (!handle) {
 		//FIXME: what to do, complain loudly? send error? send error.
+		wlr_log(WLR_ERROR, "manager_handle_create_handle: handle is null");
 		return;
 	}
 
@@ -220,6 +224,7 @@ manager_handle_create_handle(struct wl_client *client,
 			wl_resource_get_version(manager_res), obj_id);
 	if (!handle_resource) {
 		wl_client_post_no_memory(client);
+		wlr_log(WLR_ERROR, "manager_handle_create_handle: handle_resource is null");
 		return;
 	}
 
