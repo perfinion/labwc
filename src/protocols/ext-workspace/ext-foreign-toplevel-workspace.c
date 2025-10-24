@@ -24,18 +24,22 @@ static void
 send_event(struct foreign_toplevel_workspace_mapping *mapping, struct wl_resource *handle_resource,
 		void (*fn)(struct wl_resource *handle_res, struct wl_resource *ws_res))
 {
+	wlr_log(WLR_ERROR, "tlws send_event: start");
 	struct lab_wl_resource_addon *handle_addon, *ws_addon;
 	handle_addon = wl_resource_get_user_data(handle_resource);
 
 	struct wl_resource *workspace_res, *toplevel_res;
 	wl_resource_for_each(workspace_res, &mapping->workspace->resources) {
 		ws_addon = wl_resource_get_user_data(workspace_res);
+		wlr_log(WLR_ERROR, "tlws send_event: for_each");
 		if (ws_addon->ctx != handle_addon->ctx) {
+		    wlr_log(WLR_ERROR, "tlws send_event: skipping");
 			continue;
 		}
 		fn(handle_resource, workspace_res);
 		//toplevel_update_idle_source(mapping->handle->toplevel);
 		wl_resource_for_each(toplevel_res, &mapping->handle->toplevel->resources) {
+		    wlr_log(WLR_ERROR, "tlws send_event: sending done");
 			ext_foreign_toplevel_handle_v1_send_done(toplevel_res);
 		}
 		break;
@@ -46,15 +50,19 @@ static void
 broadcast_event(struct foreign_toplevel_workspace_mapping *mapping,
 		void (*fn)(struct wl_resource *handle_res, struct wl_resource *ws_res))
 {
+	wlr_log(WLR_ERROR, "tlws broadcasting event");
 	struct wl_resource *handle_resource;
 	wl_resource_for_each(handle_resource, &mapping->handle->resources) {
+		wlr_log(WLR_ERROR, "tlws broadcasting event each");
 		send_event(mapping, handle_resource, fn);
 	}
+	wlr_log(WLR_ERROR, "tlws broadcasting event done");
 }
 
 static void
 mapping_destroy(struct foreign_toplevel_workspace_mapping *mapping)
 {
+	wlr_log(WLR_ERROR, "tlws destroying mapping");
 	broadcast_event(mapping, ext_foreign_toplevel_workspace_handle_v1_send_workspace_leave);
 	wl_list_remove(&mapping->on.workspace_destroy.link);
 	wl_list_remove(&mapping->link);
@@ -182,6 +190,7 @@ manager_handle_create_handle(struct wl_client *client,
 		struct wl_resource *toplevel_res,
 		struct wl_resource *workspace_manager_res, uint32_t obj_id)
 {
+	wlr_log(WLR_ERROR, "manager_handle_create_handle: creating handle");
 	struct lab_wl_resource_addon *ws_addon, *handle_addon;
 	struct ext_foreign_toplevel_workspace_manager *manager = wl_resource_get_user_data(manager_res);
 	if (!manager) {
@@ -271,11 +280,13 @@ manager_handle_bind(struct wl_client *client, void *data,
 		manager, manager_instance_resource_destroy);
 
 	wl_list_insert(&manager->resources, wl_resource_get_link(manager_resource));
+	wlr_log(WLR_ERROR, "Bound toplevel workspace manager");
 }
 
 static void
 manager_handle_display_destroy(struct wl_listener *listener, void *data)
 {
+	wlr_log(WLR_ERROR, "Display Destroying toplevel workspace manager");
 	struct ext_foreign_toplevel_workspace_manager *manager =
 		wl_container_of(listener, manager, on.display_destroy);
 
@@ -294,6 +305,7 @@ manager_handle_display_destroy(struct wl_listener *listener, void *data)
 struct ext_foreign_toplevel_workspace_manager *
 ext_foreign_toplevel_workspace_manager_create(struct wl_display *display, uint32_t version)
 {
+	wlr_log(WLR_ERROR, "Creating toplevel workspace manager");
 	assert(version <= EXT_FOREIGN_TOPLEVEL_WORKSPACE_VERSION);
 
 	struct ext_foreign_toplevel_workspace_manager *manager = calloc(1, sizeof(*manager));
@@ -311,6 +323,7 @@ ext_foreign_toplevel_workspace_manager_create(struct wl_display *display, uint32
 
 	wl_list_init(&manager->handles);
 	wl_list_init(&manager->resources);
+	wlr_log(WLR_ERROR, "Created toplevel workspace manager");
 	return manager;
 }
 
@@ -318,6 +331,7 @@ struct ext_foreign_toplevel_workspace_handle_v1 *
 ext_foreign_toplevel_workspace_handle_v1_create(struct ext_foreign_toplevel_workspace_manager *manager,
 		struct wlr_ext_foreign_toplevel_handle_v1 *toplevel)
 {
+	wlr_log(WLR_ERROR, "Creating toplevel workspace handle");
 	struct ext_foreign_toplevel_workspace_handle_v1 *handle = calloc(1, sizeof(*handle));
 	handle->manager = manager;
 	handle->toplevel = toplevel;
@@ -328,6 +342,7 @@ ext_foreign_toplevel_workspace_handle_v1_create(struct ext_foreign_toplevel_work
 	wl_list_init(&handle->mappings);
 	wl_list_init(&handle->resources);
 	wl_list_insert(&manager->handles, &handle->link);
+	wlr_log(WLR_ERROR, "Created toplevel workspace handle");
 	return handle;
 }
 
@@ -335,17 +350,22 @@ void
 toplevel_join_workspace(struct ext_foreign_toplevel_workspace_handle_v1 *handle,
 		struct lab_ext_workspace *workspace)
 {
+	wlr_log(WLR_ERROR, "Toplevel joining workspace %s", workspace->name);
 	if (find_mapping(handle, workspace)) {
+	    wlr_log(WLR_ERROR, "  -> Joining %s but mapping already exists", workspace->name);
 		return;
 	}
 	mapping_create(handle, workspace);
+	wlr_log(WLR_ERROR, "  -> Joining %s created mapping", workspace->name);
 }
 
 void
 toplevel_leave_workspace(struct ext_foreign_toplevel_workspace_handle_v1 *handle,
 		struct lab_ext_workspace *workspace)
 {
+	wlr_log(WLR_ERROR, "Toplevel leaving workspace %s", workspace->name);
 	struct foreign_toplevel_workspace_mapping *mapping = find_mapping(handle, workspace);
+	wlr_log(WLR_ERROR, "  -> Leaving %s, mapping = %p", workspace->name, mapping);
 	if (!mapping) {
 		return;
 	}

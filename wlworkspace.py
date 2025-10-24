@@ -74,10 +74,13 @@ class WorkspaceLister:
 
     def run(self):
         """Run the main event loop until we get all workspace names."""
+        count = 0
         try:
             while self.finished < 3:
+                count += 1
                 # block=True waits for an event to arrive
-                print("Waiting for workspace names...", self.finished)
+                if count % 5 == 0:
+                    print("Waiting for workspace names...", self.finished)
                 self.display.dispatch(block=False)
                 time.sleep(1)
         except KeyboardInterrupt:
