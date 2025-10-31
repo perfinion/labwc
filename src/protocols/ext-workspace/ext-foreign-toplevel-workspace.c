@@ -198,6 +198,8 @@ manager_handle_create_handle(struct wl_client *client,
 		return;
 	}
 
+	wlr_log(WLR_ERROR, "manager_handle_create_handle: handles len: %d", wl_list_length(&manager->handles));
+	wlr_log(WLR_ERROR, "manager_handle_create_handle: resources len: %d", wl_list_length(&manager->resources));
 	ws_addon = wl_resource_get_user_data(workspace_manager_res);
 	if (!ws_addon) {
 		//FIXME: what to do, complain loudly? send error? send error.
@@ -246,6 +248,7 @@ manager_handle_create_handle(struct wl_client *client,
 	wl_list_insert(&handle->resources, wl_resource_get_link(handle_resource));
 
 	// initial sync
+	wlr_log(WLR_ERROR, "manager_handle_create_handle: initial sync");
 	struct foreign_toplevel_workspace_mapping *mapping;
 	wl_list_for_each(mapping, &handle->mappings, link) {
 		send_event(mapping, handle_resource, ext_foreign_toplevel_workspace_handle_v1_send_workspace_enter);
@@ -267,20 +270,25 @@ static void
 manager_handle_bind(struct wl_client *client, void *data,
 		uint32_t version, uint32_t id)
 {
+	wlr_log(WLR_ERROR, "Binding toplevel workspace manager, version = %d, id = %d",
+            version, id);
 	struct ext_foreign_toplevel_workspace_manager *manager = data;
 	struct wl_resource *manager_resource = wl_resource_create(client,
 			&ext_foreign_toplevel_workspace_manager_interface,
 			version, id);
 	if (!manager_resource) {
+	    wlr_log(WLR_ERROR, "Binding toplevel workspace manager, no memory");
 		wl_client_post_no_memory(client);
 		return;
 	}
 
+	wl_list_insert(&manager->resources, wl_resource_get_link(manager_resource));
+
 	wl_resource_set_implementation(manager_resource, &manager_impl,
 		manager, manager_instance_resource_destroy);
-
-	wl_list_insert(&manager->resources, wl_resource_get_link(manager_resource));
-	wlr_log(WLR_ERROR, "Bound toplevel workspace manager");
+	wlr_log(WLR_ERROR, "Bound toplevel workspace manager, handles len=%d, res len=%d", 
+        wl_list_length(&manager->handles),
+        wl_list_length(&manager->resources));
 }
 
 static void

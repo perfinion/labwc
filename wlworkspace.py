@@ -54,6 +54,7 @@ class WorkspaceLister:
         self._reg_dispatcher(registry, "global_remove")
 
         # Initial roundtrip to get the globals
+        self.roundtrip = True
         self.display.dispatch(block=True)
         self.display.roundtrip()
 
@@ -61,6 +62,7 @@ class WorkspaceLister:
             print("Error: Compositor does not support ext_workspace_manager_v1.")
             self.display.disconnect()
             sys.exit(1)
+        print("Done Roundtrip")
 
     def _reg_dispatcher(self, proxy, event):
         name = proxy.interface.name
@@ -76,12 +78,29 @@ class WorkspaceLister:
         """Run the main event loop until we get all workspace names."""
         count = 0
         try:
-            while self.finished < 3:
+            while self.finished < 4 and count < 60:
                 count += 1
                 # block=True waits for an event to arrive
-                if count % 5 == 0:
-                    print("Waiting for workspace names...", self.finished)
-                self.display.dispatch(block=False)
+                if count % 10 == 0:
+                    print("Waiting for workspace names... count=%d, finished=%d" % (count, self.finished))
+
+                # if self.roundtrip == True:
+                #     print("Needs Round Trip...")
+                #     self.roundtrip = False
+                #     self.display.roundtrip()
+                #     print("Done Round Trip...")
+                #     continue
+
+                if self.finished == 3:
+                    print(f"\nACTIVATING last workspace!")
+                    self.workspace_handles[-1].activate()
+                    self.roundtrip = True
+                    self.finished += 1
+
+                # self.display.dispatch(block=False)
+                print("Starting Round Trip...")
+                self.display.roundtrip()
+                print("Done Round Trip...")
                 time.sleep(1)
         except KeyboardInterrupt:
             pass
@@ -155,6 +174,7 @@ class WorkspaceLister:
     def _handle_workspace_handle_name(self, workspace_handle: ExtWorkspaceHandleV1, name: str):
         print(f"  -> Got name: '{name}'")
         self.workspace_names.append(name)
+        self.workspace_handles.append(workspace_handle)
 
     def _handle_workspace_handle_coordinates(self, workspace_handle: ExtWorkspaceHandleV1, coordinates: list):
         print(f"  -> Got coordinates: '{coordinates}'")
@@ -182,7 +202,9 @@ class WorkspaceLister:
             "counter": self.toplevel_counter,
         }
 
-        if self.tlws_mgr is not None:
+        if self.tlws_mgr is None:
+            print("TLWS MANAGER not yet bound!!!")
+        else:
             tlws_handle = self.tlws_mgr.create_handle(toplevel_handle, self.workspace_manager)
             self._reg_dispatcher(tlws_handle, "workspace_enter")
             self._reg_dispatcher(tlws_handle, "workspace_leave")
@@ -190,6 +212,7 @@ class WorkspaceLister:
                 "counter": self.toplevel_counter,
             }
             toplevel_handle.user_data["tlws_handle"] = tlws_handle
+            self.roundtrip = True
 
         self.toplevel_counter += 1
 
@@ -198,7 +221,7 @@ class WorkspaceLister:
         pprint(toplevel_list)
 
     def _handle_foreign_toplevel_handle_closed(self, toplevel_handle):
-        toplevel_handle.user_data["closed"] = true
+        toplevel_handle.user_data["closed"] = True
         print(f"\nToplevel closed")
         pprint(toplevel_handle.user_data)
 
